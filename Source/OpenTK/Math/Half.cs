@@ -78,9 +78,9 @@ namespace OpenTK
     [Serializable, StructLayout(LayoutKind.Sequential)]
     public struct Half : ISerializable, IComparable<Half>, IFormattable, IEquatable<Half>
     {
-        #region Internal Field
+		#region Internal Field
 
-        UInt16 bits;
+		UInt16 bits;
 
         #endregion Internal Field
 
@@ -109,11 +109,14 @@ namespace OpenTK
         public Half(Single f)
             : this()
         {
-            unsafe
-            {
-                bits = SingleToHalf(*(int*)&f);
-            }
-        }
+			MathHelper.FloatAndIntUnion convert = new MathHelper.FloatAndIntUnion { FloatValue = f };
+			bits = SingleToHalf(convert.Int32Bits);
+
+			//unsafe
+			//{
+			//	bits = SingleToHalf(*(int*)&f);
+			//}
+		}
 
         /// <summary>
         /// The new Half instance will convert the parameter into 16-bit half-precision floating-point.
@@ -251,16 +254,19 @@ namespace OpenTK
         /// <returns>A single-precision floating-point number.</returns>
         public Single ToSingle()
         {
-            int i = HalfToFloat(bits);
+			MathHelper.FloatAndIntUnion convertToI = new MathHelper.FloatAndIntUnion();
+			convertToI.Int32Bits = HalfToFloat(bits);
+			return convertToI.FloatValue;
 
-            unsafe
-            {
-                return *(float*)&i;
-            }
-        }
+			//int i = HalfToFloat(bits);
+			//unsafe
+			//{
+			//	return *(float*)&i;
+			//}
+		}
 
-        /// <summary>Ported from OpenEXR's IlmBase 1.0.1</summary>
-        private Int32 HalfToFloat(UInt16 ui16)
+		/// <summary>Ported from OpenEXR's IlmBase 1.0.1</summary>
+		private Int32 HalfToFloat(UInt16 ui16)
         {
 
             Int32 sign = (ui16 >> 15) & 0x00000001;

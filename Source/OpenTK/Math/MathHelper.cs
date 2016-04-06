@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace OpenTK
@@ -19,12 +20,22 @@ namespace OpenTK
     /// </summary>
     public static class MathHelper
     {
-        #region Fields
 
-        /// <summary>
-        /// Defines the value of Pi as a <see cref="System.Single"/>.
-        /// </summary>
-        public const float Pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382f;
+		[StructLayout(LayoutKind.Explicit)]
+		public struct FloatAndIntUnion
+		{
+			[FieldOffset(0)]
+			public int  Int32Bits;
+			[FieldOffset(0)]
+			public float FloatValue;
+		}
+
+		#region Fields
+
+		/// <summary>
+		/// Defines the value of Pi as a <see cref="System.Single"/>.
+		/// </summary>
+		public const float Pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382f;
 
         /// <summary>
         /// Defines the value of Pi divided by two as a <see cref="System.Single"/>.
@@ -171,15 +182,28 @@ namespace OpenTK
         /// </remarks>
         public static float InverseSqrtFast(float x)
         {
-            unsafe
-            {
-                float xhalf = 0.5f * x;
-                int i = *(int*)&x;              // Read bits as integer.
-                i = 0x5f375a86 - (i >> 1);      // Make an initial guess for Newton-Raphson approximation
-                x = *(float*)&i;                // Convert bits back to float
-                x = x * (1.5f - xhalf * x * x); // Perform left single Newton-Raphson step.
-                return x;
-            }
+
+			MathHelper.FloatAndIntUnion convertToI = new MathHelper.FloatAndIntUnion();
+
+			float xhalf = 0.5f * x;
+			convertToI.FloatValue = x;
+			int i = convertToI.Int32Bits;   // Read bits as integer.
+			i = 0x5f375a86 - (i >> 1);      // Make an initial guess for Newton-Raphson approximation
+			convertToI.Int32Bits = i;
+			x = convertToI.FloatValue;      // Convert bits back to float
+			x = x * (1.5f - xhalf * x * x); // Perform left single Newton-Raphson step.
+			return x;
+
+
+			//unsafe
+   //         {
+   //             float xhalf = 0.5f * x;
+   //             int i = *(int*)&x;              // Read bits as integer.
+   //             i = 0x5f375a86 - (i >> 1);      // Make an initial guess for Newton-Raphson approximation
+   //             x = *(float*)&i;                // Convert bits back to float
+   //             x = x * (1.5f - xhalf * x * x); // Perform left single Newton-Raphson step.
+   //             return x;
+   //         }
         }
 
         /// <summary>
